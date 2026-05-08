@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/product_service.dart';
+import 'scanner_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -65,6 +66,47 @@ class HomeScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.green,
+
+        child: const Icon(Icons.qr_code_scanner),
+
+        onPressed: () async {
+          final scannedBarcode = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ScannerScreen()),
+          );
+
+          if (scannedBarcode != null) {
+            final scannedProduct = ProductService.products.firstWhere(
+              (product) => product.barcode == scannedBarcode,
+            );
+
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: Text(scannedProduct.name),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Barcode: ${scannedProduct.barcode}'),
+                    Text('Expiry: ${scannedProduct.expiryDate}'),
+                    Text(
+                      scannedProduct.isSafe ? 'SAFE' : 'UNSAFE',
+                      style: TextStyle(
+                        color: scannedProduct.isSafe
+                            ? Colors.green
+                            : Colors.red,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+        },
       ),
     );
   }
