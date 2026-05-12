@@ -8,6 +8,8 @@ import '../screens/saved_screen.dart';
 
 import '../screens/scanner_screen.dart';
 
+import '../screens/ingredient_checker_screen.dart';
+
 import '../screens/restaurant/restaurant_list_screen.dart';
 
 class BottomNav extends StatefulWidget {
@@ -26,6 +28,8 @@ class _BottomNavState extends State<BottomNav> {
     const RestaurantListScreen(),
 
     const ScannerScreen(),
+
+    const IngredientCheckerScreen(),
 
     const SavedScreen(),
 
@@ -69,6 +73,12 @@ class _BottomNavState extends State<BottomNav> {
             icon: Icon(Icons.qr_code_scanner),
 
             label: 'Scan',
+          ),
+
+          BottomNavigationBarItem(
+            icon: Icon(Icons.psychology),
+
+            label: 'AI Check',
           ),
 
           BottomNavigationBarItem(icon: Icon(Icons.bookmark), label: 'Saved'),

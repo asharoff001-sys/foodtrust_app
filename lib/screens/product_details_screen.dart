@@ -26,9 +26,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         .doc(widget.product['id'].toString())
         .set({
           'productId': widget.product['id'].toString(),
-
           'productName': widget.product['name'] ?? '',
-
           'savedAt': Timestamp.now(),
         });
 
@@ -55,9 +53,23 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     return Colors.red;
   }
 
+  String getSafetyLabel(double score) {
+    if (score >= 8) {
+      return 'Safe';
+    }
+
+    if (score >= 5) {
+      return 'Moderate';
+    }
+
+    return 'Risky';
+  }
+
   @override
   Widget build(BuildContext context) {
     final halal = widget.product['halal'] == true;
+
+    final vegan = widget.product['vegan'] == true;
 
     final safetyScore = (widget.product['safetyScore'] ?? 0).toDouble();
 
@@ -81,29 +93,27 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
 
           children: [
-            Center(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(24),
 
-                child: Image.network(
-                  widget.product['image'] ?? '',
+              child: Image.network(
+                widget.product['image'] ?? '',
 
-                  height: 220,
+                height: 240,
 
-                  width: double.infinity,
+                width: double.infinity,
 
-                  fit: BoxFit.cover,
+                fit: BoxFit.cover,
 
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      height: 220,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    height: 240,
 
-                      color: Colors.grey.shade300,
+                    color: Colors.grey.shade300,
 
-                      child: const Icon(Icons.fastfood, size: 80),
-                    );
-                  },
-                ),
+                    child: const Icon(Icons.fastfood, size: 80),
+                  );
+                },
               ),
             ),
 
@@ -125,56 +135,102 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
             const SizedBox(height: 25),
 
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+
+              children: [
+                buildBadge(
+                  label: halal ? 'Halal' : 'Not Verified',
+
+                  color: halal ? Colors.green : Colors.orange,
+
+                  icon: halal ? Icons.verified : Icons.warning,
+                ),
+
+                buildBadge(
+                  label: getSafetyLabel(safetyScore),
+
+                  color: getSafetyColor(safetyScore),
+
+                  icon: safetyScore >= 8 ? Icons.shield : Icons.error,
+                ),
+
+                if (vegan)
+                  buildBadge(
+                    label: 'Vegan',
+
+                    color: Colors.teal,
+
+                    icon: Icons.eco,
+                  ),
+              ],
+            ),
+
+            const SizedBox(height: 25),
+
             Container(
-              padding: const EdgeInsets.all(18),
+              padding: const EdgeInsets.all(20),
 
               decoration: BoxDecoration(
                 color: getSafetyColor(safetyScore).withOpacity(0.1),
 
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(20),
               ),
 
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+
                 children: [
-                  Icon(
-                    halal ? Icons.verified : Icons.warning,
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.health_and_safety,
 
-                    color: halal ? Colors.green : Colors.orange,
+                        color: getSafetyColor(safetyScore),
 
-                    size: 36,
+                        size: 34,
+                      ),
+
+                      const SizedBox(width: 12),
+
+                      Text(
+                        'Safety Score',
+
+                        style: TextStyle(
+                          fontSize: 22,
+
+                          fontWeight: FontWeight.bold,
+
+                          color: getSafetyColor(safetyScore),
+                        ),
+                      ),
+                    ],
                   ),
 
-                  const SizedBox(width: 16),
+                  const SizedBox(height: 20),
 
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  LinearProgressIndicator(
+                    value: safetyScore / 10,
 
-                      children: [
-                        Text(
-                          halal ? 'Halal Verified' : 'Needs Verification',
+                    minHeight: 12,
 
-                          style: TextStyle(
-                            fontSize: 20,
+                    borderRadius: BorderRadius.circular(20),
 
-                            fontWeight: FontWeight.bold,
+                    backgroundColor: Colors.grey.shade300,
 
-                            color: halal ? Colors.green : Colors.orange,
-                          ),
-                        ),
+                    color: getSafetyColor(safetyScore),
+                  ),
 
-                        const SizedBox(height: 6),
+                  const SizedBox(height: 12),
 
-                        Text(
-                          'Safety Score: ${safetyScore.toStringAsFixed(1)}/10',
+                  Text(
+                    '${safetyScore.toStringAsFixed(1)}/10 Safety Rating',
 
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
 
-                            color: getSafetyColor(safetyScore),
-                          ),
-                        ),
-                      ],
+                      color: getSafetyColor(safetyScore),
                     ),
                   ),
                 ],
@@ -183,88 +239,152 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
             const SizedBox(height: 30),
 
-            const Text(
-              'Ingredients',
+            buildSectionTitle('Ingredients'),
 
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
+            const SizedBox(height: 12),
 
-            const SizedBox(height: 10),
-
-            Text(
-              widget.product['ingredients'] ?? '',
-
-              style: const TextStyle(fontSize: 16, height: 1.5),
+            buildInfoCard(
+              widget.product['ingredients'] ?? 'No ingredients available',
             ),
 
             const SizedBox(height: 30),
 
-            const Text(
-              'Description',
+            buildSectionTitle('Description'),
 
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
+            const SizedBox(height: 12),
 
-            const SizedBox(height: 10),
-
-            Text(
-              widget.product['description'] ?? '',
-
-              style: const TextStyle(fontSize: 16, height: 1.5),
+            buildInfoCard(
+              widget.product['description'] ?? 'No description available',
             ),
 
             const SizedBox(height: 30),
+
+            buildSectionTitle('Product Information'),
+
+            const SizedBox(height: 12),
 
             Card(
+              elevation: 2,
+
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(18),
               ),
 
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(18),
 
                 child: Column(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    buildInfoRow('Category', widget.product['category'] ?? ''),
 
-                      children: [
-                        const Text('Category'),
+                    const Divider(height: 30),
 
-                        Text(widget.product['category'] ?? ''),
-                      ],
+                    buildInfoRow(
+                      'Safety',
+                      getSafetyLabel(safetyScore),
+
+                      valueColor: getSafetyColor(safetyScore),
                     ),
 
-                    const SizedBox(height: 14),
+                    const Divider(height: 30),
 
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    buildInfoRow(
+                      'Halal Status',
+                      halal ? 'Verified' : 'Needs Verification',
 
-                      children: [
-                        const Text('Safety'),
-
-                        Text(
-                          safetyScore >= 8
-                              ? 'Safe'
-                              : safetyScore >= 5
-                              ? 'Moderate'
-                              : 'Risky',
-
-                          style: TextStyle(
-                            color: getSafetyColor(safetyScore),
-
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
+                      valueColor: halal ? Colors.green : Colors.orange,
                     ),
                   ],
                 ),
               ),
             ),
+
+            const SizedBox(height: 40),
           ],
         ),
       ),
+    );
+  }
+
+  Widget buildBadge({
+    required String label,
+    required Color color,
+    required IconData icon,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+
+        borderRadius: BorderRadius.circular(30),
+      ),
+
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+
+        children: [
+          Icon(icon, color: color, size: 18),
+
+          const SizedBox(width: 6),
+
+          Text(
+            label,
+
+            style: TextStyle(color: color, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildSectionTitle(String title) {
+    return Text(
+      title,
+
+      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+    );
+  }
+
+  Widget buildInfoCard(String text) {
+    return Container(
+      width: double.infinity,
+
+      padding: const EdgeInsets.all(18),
+
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+
+        borderRadius: BorderRadius.circular(18),
+      ),
+
+      child: Text(text, style: const TextStyle(fontSize: 16, height: 1.6)),
+    );
+  }
+
+  Widget buildInfoRow(String title, String value, {Color? valueColor}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+      children: [
+        Text(
+          title,
+
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+        ),
+
+        Text(
+          value,
+
+          style: TextStyle(
+            fontSize: 16,
+
+            fontWeight: FontWeight.bold,
+
+            color: valueColor,
+          ),
+        ),
+      ],
     );
   }
 }
