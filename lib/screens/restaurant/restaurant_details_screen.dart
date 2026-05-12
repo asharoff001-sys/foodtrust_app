@@ -13,15 +13,23 @@ class RestaurantDetailsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final restaurantId = restaurant['id'];
 
+    final halal = restaurant['halal'] == true;
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      appBar: AppBar(title: Text(restaurant['name'] ?? ''), centerTitle: true),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
 
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.green,
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: isDark ? Colors.purpleAccent : Colors.green,
 
-        child: const Icon(Icons.add),
+        foregroundColor: Colors.white,
 
-        onPressed: () async {
+        icon: const Icon(Icons.rate_review),
+
+        label: const Text('Add Review'),
+
+        onPressed: () {
           Navigator.push(
             context,
 
@@ -32,103 +40,134 @@ class RestaurantDetailsScreen extends StatelessWidget {
         },
       ),
 
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 280,
 
-          children: [
-            Container(
-              height: 220,
+            pinned: true,
 
-              width: double.infinity,
+            backgroundColor: isDark ? const Color(0xFF12121A) : Colors.green,
 
-              decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: NetworkImage(restaurant['image'] ?? ''),
+            flexibleSpace: FlexibleSpaceBar(
+              title: Text(restaurant['name'] ?? ''),
 
-                  fit: BoxFit.cover,
-                ),
+              background: Stack(
+                fit: StackFit.expand,
+
+                children: [
+                  Image.network(
+                    restaurant['image'] ?? '',
+
+                    fit: BoxFit.cover,
+
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: isDark
+                            ? const Color(0xFF1A1A24)
+                            : Colors.grey.shade300,
+
+                        child: Icon(
+                          Icons.restaurant,
+
+                          size: 90,
+
+                          color: isDark ? Colors.white70 : Colors.black54,
+                        ),
+                      );
+                    },
+                  ),
+
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+
+                        end: Alignment.bottomCenter,
+
+                        colors: [
+                          Colors.transparent,
+
+                          Colors.black.withOpacity(0.7),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
+          ),
 
-            Padding(
+          SliverToBoxAdapter(
+            child: Padding(
               padding: const EdgeInsets.all(20),
 
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
 
                 children: [
-                  Text(
-                    restaurant['name'] ?? '',
-
-                    style: const TextStyle(
-                      fontSize: 28,
-
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
                   Row(
                     children: [
                       const Icon(Icons.location_on, color: Colors.red),
 
                       const SizedBox(width: 6),
 
-                      Text(restaurant['location'] ?? ''),
-                    ],
-                  ),
+                      Expanded(
+                        child: Text(
+                          restaurant['location'] ?? '',
 
-                  const SizedBox(height: 14),
+                          style: TextStyle(
+                            fontSize: 16,
 
-                  Row(
-                    children: [
-                      Icon(
-                        restaurant['halal'] == true
-                            ? Icons.verified
-                            : Icons.warning,
-
-                        color: restaurant['halal'] == true
-                            ? Colors.green
-                            : Colors.orange,
-                      ),
-
-                      const SizedBox(width: 8),
-
-                      Text(
-                        restaurant['halal'] == true
-                            ? 'Halal Verified'
-                            : 'Needs Verification',
-
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-
-                          color: restaurant['halal'] == true
-                              ? Colors.green
-                              : Colors.orange,
+                            color: isDark
+                                ? Colors.grey.shade400
+                                : Colors.grey.shade700,
+                          ),
                         ),
                       ),
                     ],
                   ),
 
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 20),
+
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+
+                    children: [
+                      buildBadge(
+                        label: halal ? 'Halal Verified' : 'Needs Verification',
+
+                        color: halal ? Colors.green : Colors.orange,
+
+                        icon: halal ? Icons.verified : Icons.warning,
+                      ),
+
+                      buildBadge(
+                        label: restaurant['hygieneStatus'] ?? 'Unknown',
+
+                        color: Colors.blue,
+
+                        icon: Icons.health_and_safety,
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 34),
 
                   Text(
-                    'Hygiene Status: ${restaurant['hygieneStatus'] ?? ''}',
-
-                    style: const TextStyle(fontSize: 16),
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  const Text(
                     'Customer Reviews',
 
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 24,
+
+                      fontWeight: FontWeight.bold,
+
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 18),
 
                   StreamBuilder<QuerySnapshot>(
                     stream: FirebaseFirestore.instance
@@ -140,11 +179,59 @@ class RestaurantDetailsScreen extends StatelessWidget {
 
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(30),
+
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
                       }
 
                       if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                        return const Text('No reviews yet');
+                        return Container(
+                          width: double.infinity,
+
+                          padding: const EdgeInsets.all(30),
+
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? const Color(0xFF1A1A24)
+                                : Colors.grey.shade100,
+
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.reviews_outlined,
+
+                                size: 70,
+
+                                color: isDark
+                                    ? Colors.white54
+                                    : Colors.grey.shade500,
+                              ),
+
+                              const SizedBox(height: 16),
+
+                              Text(
+                                'No reviews yet',
+
+                                style: TextStyle(
+                                  fontSize: 18,
+
+                                  fontWeight: FontWeight.bold,
+
+                                  color: Theme.of(
+                                    context,
+                                  ).textTheme.bodyLarge?.color,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
                       }
 
                       final reviews = snapshot.data!.docs;
@@ -153,22 +240,60 @@ class RestaurantDetailsScreen extends StatelessWidget {
                         children: reviews.map((review) {
                           final data = review.data() as Map<String, dynamic>;
 
-                          return ReviewCard(
-                            username: data['username'] ?? '',
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 14),
 
-                            comment: data['comment'] ?? '',
+                            child: ReviewCard(
+                              username: data['username'] ?? '',
 
-                            rating: (data['rating'] ?? 0).toDouble(),
+                              comment: data['comment'] ?? '',
+
+                              rating: (data['rating'] ?? 0).toDouble(),
+                            ),
                           );
                         }).toList(),
                       );
                     },
                   ),
+
+                  const SizedBox(height: 100),
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildBadge({
+    required String label,
+    required Color color,
+    required IconData icon,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+
+        borderRadius: BorderRadius.circular(30),
+      ),
+
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+
+        children: [
+          Icon(icon, color: color, size: 18),
+
+          const SizedBox(width: 6),
+
+          Text(
+            label,
+
+            style: TextStyle(color: color, fontWeight: FontWeight.bold),
+          ),
+        ],
       ),
     );
   }

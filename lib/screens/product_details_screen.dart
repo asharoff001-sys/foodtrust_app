@@ -26,7 +26,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         .doc(widget.product['id'].toString())
         .set({
           'productId': widget.product['id'].toString(),
+
           'productName': widget.product['name'] ?? '',
+
           'savedAt': Timestamp.now(),
         });
 
@@ -73,15 +75,35 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
     final safetyScore = (widget.product['safetyScore'] ?? 0).toDouble();
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+
       appBar: AppBar(
+        elevation: 0,
+
         title: Text(widget.product['name'] ?? 'Product'),
 
         actions: [
-          IconButton(
-            icon: Icon(isSaved ? Icons.bookmark : Icons.bookmark_border),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
 
-            onPressed: saveProduct,
+            child: IconButton(
+              style: IconButton.styleFrom(
+                backgroundColor: isDark
+                    ? const Color(0xFF1A1A24)
+                    : Colors.green.shade50,
+              ),
+
+              icon: Icon(
+                isSaved ? Icons.bookmark : Icons.bookmark_border,
+
+                color: isDark ? Colors.purpleAccent : Colors.green,
+              ),
+
+              onPressed: saveProduct,
+            ),
           ),
         ],
       ),
@@ -93,47 +115,69 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
 
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(24),
+            Hero(
+              tag: widget.product['id'].toString(),
 
-              child: Image.network(
-                widget.product['image'] ?? '',
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(28),
 
-                height: 240,
+                child: Image.network(
+                  widget.product['image'] ?? '',
 
-                width: double.infinity,
+                  height: 260,
 
-                fit: BoxFit.cover,
+                  width: double.infinity,
 
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    height: 240,
+                  fit: BoxFit.cover,
 
-                    color: Colors.grey.shade300,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 260,
 
-                    child: const Icon(Icons.fastfood, size: 80),
-                  );
-                },
+                      color: isDark
+                          ? const Color(0xFF1A1A24)
+                          : Colors.grey.shade300,
+
+                      child: Icon(
+                        Icons.fastfood,
+
+                        size: 90,
+
+                        color: isDark ? Colors.white70 : Colors.black54,
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
 
-            const SizedBox(height: 25),
+            const SizedBox(height: 28),
 
             Text(
               widget.product['name'] ?? '',
 
-              style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 30,
+
+                fontWeight: FontWeight.bold,
+
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+              ),
             ),
 
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
 
             Text(
               widget.product['brand'] ?? '',
 
-              style: TextStyle(fontSize: 18, color: Colors.grey.shade700),
+              style: TextStyle(
+                fontSize: 18,
+
+                color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
+              ),
             ),
 
-            const SizedBox(height: 25),
+            const SizedBox(height: 26),
 
             Wrap(
               spacing: 10,
@@ -141,7 +185,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
               children: [
                 buildBadge(
-                  label: halal ? 'Halal' : 'Not Verified',
+                  label: halal ? 'Halal' : 'Needs Verification',
 
                   color: halal ? Colors.green : Colors.orange,
 
@@ -167,129 +211,75 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               ],
             ),
 
-            const SizedBox(height: 25),
-
-            Container(
-              padding: const EdgeInsets.all(20),
-
-              decoration: BoxDecoration(
-                color: getSafetyColor(safetyScore).withOpacity(0.1),
-
-                borderRadius: BorderRadius.circular(20),
-              ),
-
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.health_and_safety,
-
-                        color: getSafetyColor(safetyScore),
-
-                        size: 34,
-                      ),
-
-                      const SizedBox(width: 12),
-
-                      Text(
-                        'Safety Score',
-
-                        style: TextStyle(
-                          fontSize: 22,
-
-                          fontWeight: FontWeight.bold,
-
-                          color: getSafetyColor(safetyScore),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  LinearProgressIndicator(
-                    value: safetyScore / 10,
-
-                    minHeight: 12,
-
-                    borderRadius: BorderRadius.circular(20),
-
-                    backgroundColor: Colors.grey.shade300,
-
-                    color: getSafetyColor(safetyScore),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  Text(
-                    '${safetyScore.toStringAsFixed(1)}/10 Safety Rating',
-
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-
-                      color: getSafetyColor(safetyScore),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
             const SizedBox(height: 30),
+
+            buildSafetyCard(safetyScore),
+
+            const SizedBox(height: 34),
 
             buildSectionTitle('Ingredients'),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
 
             buildInfoCard(
               widget.product['ingredients'] ?? 'No ingredients available',
             ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 34),
 
             buildSectionTitle('Description'),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
 
             buildInfoCard(
               widget.product['description'] ?? 'No description available',
             ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 34),
 
             buildSectionTitle('Product Information'),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
 
             Card(
+              color: Theme.of(context).cardColor,
+
               elevation: 2,
 
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(20),
               ),
 
               child: Padding(
-                padding: const EdgeInsets.all(18),
+                padding: const EdgeInsets.all(20),
 
                 child: Column(
                   children: [
                     buildInfoRow('Category', widget.product['category'] ?? ''),
 
-                    const Divider(height: 30),
+                    Divider(
+                      height: 30,
+
+                      color: isDark ? Colors.white24 : Colors.black12,
+                    ),
 
                     buildInfoRow(
                       'Safety',
+
                       getSafetyLabel(safetyScore),
 
                       valueColor: getSafetyColor(safetyScore),
                     ),
 
-                    const Divider(height: 30),
+                    Divider(
+                      height: 30,
+
+                      color: isDark ? Colors.white24 : Colors.black12,
+                    ),
 
                     buildInfoRow(
                       'Halal Status',
+
                       halal ? 'Verified' : 'Needs Verification',
 
                       valueColor: halal ? Colors.green : Colors.orange,
@@ -306,13 +296,93 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     );
   }
 
+  Widget buildSafetyCard(double safetyScore) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.all(22),
+
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            getSafetyColor(safetyScore).withOpacity(0.15),
+
+            isDark ? const Color(0xFF1A1A24) : Colors.white,
+          ],
+        ),
+
+        borderRadius: BorderRadius.circular(24),
+      ),
+
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.health_and_safety,
+
+                color: getSafetyColor(safetyScore),
+
+                size: 36,
+              ),
+
+              const SizedBox(width: 12),
+
+              Text(
+                'Safety Score',
+
+                style: TextStyle(
+                  fontSize: 24,
+
+                  fontWeight: FontWeight.bold,
+
+                  color: getSafetyColor(safetyScore),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 22),
+
+          LinearProgressIndicator(
+            value: safetyScore / 10,
+
+            minHeight: 14,
+
+            borderRadius: BorderRadius.circular(30),
+
+            backgroundColor: Colors.grey.shade700,
+
+            color: getSafetyColor(safetyScore),
+          ),
+
+          const SizedBox(height: 14),
+
+          Text(
+            '${safetyScore.toStringAsFixed(1)}/10 Safety Rating',
+
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+
+              fontSize: 16,
+
+              color: getSafetyColor(safetyScore),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget buildBadge({
     required String label,
     required Color color,
     required IconData icon,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
 
       decoration: BoxDecoration(
         color: color.withOpacity(0.12),
@@ -342,23 +412,41 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     return Text(
       title,
 
-      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+      style: TextStyle(
+        fontSize: 24,
+
+        fontWeight: FontWeight.bold,
+
+        color: Theme.of(context).textTheme.bodyLarge?.color,
+      ),
     );
   }
 
   Widget buildInfoCard(String text) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
 
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
 
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color: isDark ? const Color(0xFF1A1A24) : Colors.grey.shade100,
 
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
       ),
 
-      child: Text(text, style: const TextStyle(fontSize: 16, height: 1.6)),
+      child: Text(
+        text,
+
+        style: TextStyle(
+          fontSize: 16,
+
+          height: 1.7,
+
+          color: Theme.of(context).textTheme.bodyLarge?.color,
+        ),
+      ),
     );
   }
 
@@ -370,7 +458,13 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         Text(
           title,
 
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          style: TextStyle(
+            fontSize: 16,
+
+            fontWeight: FontWeight.w500,
+
+            color: Theme.of(context).textTheme.bodyLarge?.color,
+          ),
         ),
 
         Text(
@@ -381,7 +475,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
             fontWeight: FontWeight.bold,
 
-            color: valueColor,
+            color: valueColor ?? Theme.of(context).textTheme.bodyLarge?.color,
           ),
         ),
       ],

@@ -13,12 +13,63 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen>
+    with TickerProviderStateMixin {
+  late AnimationController logoController;
+
+  late AnimationController textController;
+
+  late Animation<double> logoScale;
+
+  late Animation<double> logoRotation;
+
+  late Animation<double> textOpacity;
+
+  late Animation<Offset> textSlide;
+
   @override
   void initState() {
     super.initState();
 
-    Timer(const Duration(seconds: 3), () {
+    logoController = AnimationController(
+      vsync: this,
+
+      duration: const Duration(milliseconds: 1800),
+    );
+
+    textController = AnimationController(
+      vsync: this,
+
+      duration: const Duration(milliseconds: 1200),
+    );
+
+    logoScale = CurvedAnimation(
+      parent: logoController,
+
+      curve: Curves.elasticOut,
+    );
+
+    logoRotation = Tween<double>(
+      begin: -0.15,
+
+      end: 0,
+    ).animate(CurvedAnimation(parent: logoController, curve: Curves.easeOut));
+
+    textOpacity = Tween<double>(
+      begin: 0,
+
+      end: 1,
+    ).animate(CurvedAnimation(parent: textController, curve: Curves.easeIn));
+
+    textSlide = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: textController, curve: Curves.easeOut));
+
+    startAnimations();
+
+    Timer(const Duration(seconds: 4), () {
       final user = FirebaseAuth.instance.currentUser;
 
       if (!mounted) return;
@@ -39,53 +90,137 @@ class _SplashScreenState extends State<SplashScreen> {
     });
   }
 
+  Future<void> startAnimations() async {
+    await logoController.forward();
+
+    await textController.forward();
+  }
+
+  @override
+  void dispose() {
+    logoController.dispose();
+
+    textController.dispose();
+
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.green,
+      backgroundColor: isDark ? const Color(0xFF0F0F14) : Colors.green,
 
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
 
           children: [
-            Container(
-              padding: const EdgeInsets.all(24),
+            AnimatedBuilder(
+              animation: logoController,
 
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              builder: (context, child) {
+                return Transform.rotate(
+                  angle: logoRotation.value,
 
-                shape: BoxShape.circle,
-              ),
+                  child: Transform.scale(
+                    scale: logoScale.value,
 
-              child: const Icon(Icons.verified, size: 80, color: Colors.green),
-            ),
+                    child: Container(
+                      padding: const EdgeInsets.all(28),
 
-            const SizedBox(height: 30),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
 
-            const Text(
-              'FoodTrust',
+                        gradient: LinearGradient(
+                          colors: isDark
+                              ? [Colors.purpleAccent, Colors.pinkAccent]
+                              : [Colors.white, Colors.white70],
+                        ),
 
-              style: TextStyle(
-                color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: isDark
+                                ? Colors.purpleAccent.withOpacity(0.35)
+                                : Colors.black.withOpacity(0.15),
 
-                fontSize: 40,
+                            blurRadius: 30,
 
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+                            spreadRadius: 4,
+                          ),
+                        ],
+                      ),
 
-            const SizedBox(height: 10),
+                      child: Image.asset(
+                        'assets/images/logo.png',
 
-            const Text(
-              'Trusted Halal Verification',
+                        width: 90,
 
-              style: TextStyle(color: Colors.white70, fontSize: 16),
+                        height: 90,
+
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
 
             const SizedBox(height: 40),
 
-            const CircularProgressIndicator(color: Colors.white),
+            FadeTransition(
+              opacity: textOpacity,
+
+              child: SlideTransition(
+                position: textSlide,
+
+                child: Column(
+                  children: [
+                    const Text(
+                      'FoodTrust',
+
+                      style: TextStyle(
+                        color: Colors.white,
+
+                        fontSize: 42,
+
+                        fontWeight: FontWeight.bold,
+
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    Text(
+                      'Trusted Halal Verification',
+
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.8),
+
+                        fontSize: 16,
+
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 60),
+
+            SizedBox(
+              width: 34,
+              height: 34,
+
+              child: CircularProgressIndicator(
+                strokeWidth: 3,
+
+                color: isDark ? Colors.pinkAccent : Colors.white,
+              ),
+            ),
           ],
         ),
       ),

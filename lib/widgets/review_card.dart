@@ -19,7 +19,11 @@ class ReviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Card(
+      color: Theme.of(context).cardColor,
+
       elevation: 4,
 
       margin: const EdgeInsets.only(bottom: 14),
@@ -37,26 +41,40 @@ class ReviewCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
 
               children: [
-                Row(
-                  children: [
-                    CircleAvatar(
-                      backgroundColor: Colors.green.shade100,
+                Expanded(
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: isDark
+                            ? const Color(0xFF2A1F3D)
+                            : Colors.green.shade100,
 
-                      child: const Icon(Icons.person, color: Colors.green),
-                    ),
+                        child: Icon(
+                          Icons.person,
 
-                    const SizedBox(width: 12),
-
-                    Text(
-                      username,
-
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-
-                        fontSize: 17,
+                          color: isDark ? Colors.purpleAccent : Colors.green,
+                        ),
                       ),
-                    ),
-                  ],
+
+                      const SizedBox(width: 12),
+
+                      Expanded(
+                        child: Text(
+                          username,
+
+                          overflow: TextOverflow.ellipsis,
+
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+
+                            fontSize: 17,
+
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
 
                 Container(
@@ -66,7 +84,9 @@ class ReviewCard extends StatelessWidget {
                   ),
 
                   decoration: BoxDecoration(
-                    color: Colors.amber.shade100,
+                    color: isDark
+                        ? Colors.amber.withOpacity(0.18)
+                        : Colors.amber.shade100,
 
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -80,7 +100,11 @@ class ReviewCard extends StatelessWidget {
                       Text(
                         rating.toStringAsFixed(1),
 
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
+                        ),
                       ),
                     ],
                   ),
@@ -90,7 +114,17 @@ class ReviewCard extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            Text(comment, style: const TextStyle(height: 1.5, fontSize: 15)),
+            Text(
+              comment,
+
+              style: TextStyle(
+                height: 1.5,
+
+                fontSize: 15,
+
+                color: isDark ? Colors.white70 : Colors.black87,
+              ),
+            ),
           ],
         ),
       ),
