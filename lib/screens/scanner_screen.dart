@@ -38,12 +38,14 @@ class _ScannerScreenState extends State<ScannerScreen> {
           .doc(code)
           .get();
 
+      print('FETCHING PRODUCT WITH ID: $code');
+
       if (!doc.exists) {
         if (!context.mounted) return;
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Product not found in database')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Product not found: $code')));
 
         setState(() {
           isScanning = true;
@@ -70,6 +72,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
         isLoading = false;
       });
     } catch (e) {
+      print('SCANNER ERROR: $e');
+
       setState(() {
         isScanning = true;
         isLoading = false;
@@ -104,6 +108,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
         children: [
           MobileScanner(
             controller: controller,
+            fit: BoxFit.cover,
 
             onDetect: (capture) async {
               if (!isScanning) return;
@@ -112,9 +117,25 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
               if (barcodes.isEmpty) return;
 
-              final code = barcodes.first.rawValue;
+              String? code = barcodes.first.rawValue;
 
               if (code == null) return;
+
+              code = code.trim();
+
+              // Remove invalid Firestore characters
+              code = code.replaceAll('/', '');
+              code = code.replaceAll('\\', '');
+
+              if (code.isEmpty) {
+                setState(() {
+                  isScanning = true;
+                });
+
+                return;
+              }
+
+              print('SCANNED CODE: $code');
 
               setState(() {
                 isScanning = false;
@@ -153,6 +174,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
               child: const Text(
                 'Align barcode inside the frame',
+
                 textAlign: TextAlign.center,
 
                 style: TextStyle(color: Colors.white, fontSize: 16),
