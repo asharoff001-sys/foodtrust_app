@@ -1,17 +1,68 @@
-# foodtrust_app
+# FoodTrust – Trusted Halal Verification App
 
-A new Flutter project.
+FoodTrust is a Flutter + Firebase based halal food verification platform that helps users identify halal food products, analyze ingredients, and discover trusted halal restaurants.
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## Features
 
-A few resources to get you started if this is your first Flutter project:
+- Firebase Authentication
+- Barcode Scanner
+- Product Verification
+- AI Ingredient Checker
+- Restaurant Reviews
+- Saved Products
+- Scan History
+- Dark / Light Theme
+- Animated Splash Screen
+- Firebase Firestore Backend
+- Debug / Report System
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+---
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Technologies Used
+
+- Flutter
+- Firebase Authentication
+- Cloud Firestore
+- Mobile Scanner
+- Provider State Management
+
+---
+
+## Screenshots
+
+### Splash Screen
+
+![Splash Screen](screenshots/splash.png)
+
+---
+
+### Home Screen
+
+![Home Screen](screenshots/screenshot_home-screen.png)
+
+---
+
+### Profile Screen
+
+![Profile Screen](screenshots/screenshot_profile-screen.png)
+
+---
+
+### Product details Screen
+
+![Product Details Screen] (screenshot/screenshot_details-product-screen)
+
+---
+
+### Restaurants
+
+![Restaurants](screenshots/screenshot_restaurant-screen.png)
+## Installation
+
+```bash
+git clone https://github.com/YOUR_USERNAME/foodtrust-app.git
+cd foodtrust-app
+flutter pub get
+flutter run
