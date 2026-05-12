@@ -3,98 +3,162 @@ import 'package:flutter/material.dart';
 
 import 'restaurant_details_screen.dart';
 
-class RestaurantListScreen extends StatelessWidget {
+class RestaurantListScreen extends StatefulWidget {
   const RestaurantListScreen({super.key});
+
+  @override
+  State<RestaurantListScreen> createState() => _RestaurantListScreenState();
+}
+
+class _RestaurantListScreenState extends State<RestaurantListScreen> {
+  String searchText = '';
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Restaurants'), centerTitle: true),
 
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('restaurants')
-            .snapshots(),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12),
 
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: 'Search restaurants...',
 
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text('No restaurants found'));
-          }
+                prefixIcon: const Icon(Icons.search),
 
-          final restaurants = snapshot.data!.docs;
-
-          return ListView.builder(
-            itemCount: restaurants.length,
-
-            itemBuilder: (context, index) {
-              final restaurant = restaurants[index];
-
-              final data = restaurant.data() as Map<String, dynamic>;
-
-              final halal = data['halal'] == true;
-
-              return Card(
-                elevation: 4,
-
-                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
                 ),
+              ),
 
-                child: ListTile(
-                  contentPadding: const EdgeInsets.all(12),
+              onChanged: (value) {
+                setState(() {
+                  searchText = value.toLowerCase();
+                });
+              },
+            ),
+          ),
 
-                  leading: CircleAvatar(
-                    backgroundColor: Colors.green.shade100,
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('restaurants')
+                  .snapshots(),
 
-                    child: const Icon(Icons.restaurant, color: Colors.green),
-                  ),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-                  title: Text(
-                    data['name'] ?? '',
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Center(child: Text('No restaurants found'));
+                }
 
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
+                final restaurants = snapshot.data!.docs;
 
-                  subtitle: Text(data['location'] ?? ''),
+                return ListView.builder(
+                  itemCount: restaurants.length,
 
-                  trailing: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  itemBuilder: (context, index) {
+                    final restaurant = restaurants[index];
 
-                    children: [
-                      Icon(
-                        halal ? Icons.verified : Icons.warning,
+                    final data = restaurant.data() as Map<String, dynamic>;
 
-                        color: halal ? Colors.green : Colors.orange,
+                    final name = (data['name'] ?? '').toString().toLowerCase();
+
+                    if (!name.contains(searchText)) {
+                      return const SizedBox();
+                    }
+
+                    final halal = data['halal'] == true;
+
+                    return Card(
+                      elevation: 4,
+
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
                       ),
 
-                      const SizedBox(height: 4),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
 
-                      Text(data['rating'].toString()),
-                    ],
-                  ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.all(12),
 
-                  onTap: () {
-                    Navigator.push(
-                      context,
+                        leading: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
 
-                      MaterialPageRoute(
-                        builder: (context) => RestaurantDetailsScreen(
-                          restaurant: {'id': restaurant.id, ...data},
+                          child: Image.network(
+                            data['image'] ?? '',
+
+                            width: 60,
+
+                            height: 60,
+
+                            fit: BoxFit.cover,
+
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                width: 60,
+
+                                height: 60,
+
+                                color: Colors.grey.shade300,
+
+                                child: const Icon(Icons.restaurant),
+                              );
+                            },
+                          ),
                         ),
+
+                        title: Text(
+                          data['name'] ?? '',
+
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+
+                        subtitle: Text(data['location'] ?? ''),
+
+                        trailing: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+
+                          children: [
+                            Icon(
+                              halal ? Icons.verified : Icons.warning,
+
+                              color: halal ? Colors.green : Colors.orange,
+                            ),
+
+                            const SizedBox(height: 4),
+
+                            Text((data['rating'] ?? 0).toString()),
+                          ],
+                        ),
+
+                        onTap: () {
+                          Navigator.push(
+                            context,
+
+                            MaterialPageRoute(
+                              builder: (context) => RestaurantDetailsScreen(
+                                restaurant: {'id': restaurant.id, ...data},
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     );
                   },
-                ),
-              );
-            },
-          );
-        },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

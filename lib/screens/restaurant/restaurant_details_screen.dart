@@ -1,252 +1,170 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-import '../../widgets/review_card.dart';
-import '../../models/review_model.dart';
-
 import '../reviews/add_review_screen.dart';
+import '../../widgets/review_card.dart';
 
-class RestaurantDetailsScreen extends StatefulWidget {
+class RestaurantDetailsScreen extends StatelessWidget {
   final Map<String, dynamic> restaurant;
 
   const RestaurantDetailsScreen({super.key, required this.restaurant});
 
   @override
-  State<RestaurantDetailsScreen> createState() =>
-      _RestaurantDetailsScreenState();
-}
-
-class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
-  final List<Review> reviews = [
-    Review(
-      id: '1',
-
-      userName: 'Yasin',
-
-      rating: 4.8,
-
-      comment: 'Very clean restaurant and trustworthy halal food.',
-
-      date: '2026-05-12',
-    ),
-
-    Review(
-      id: '2',
-
-      userName: 'Sarah',
-
-      rating: 4.5,
-
-      comment: 'Loved the food quality and environment.',
-
-      date: '2026-05-11',
-    ),
-
-    Review(
-      id: '3',
-
-      userName: 'Ahmed',
-
-      rating: 4.2,
-
-      comment: 'Good service but verification should improve.',
-
-      date: '2026-05-10',
-    ),
-  ];
-
-  @override
   Widget build(BuildContext context) {
-    final halal = widget.restaurant['halal'] == true;
+    final restaurantId = restaurant['id'];
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.restaurant['name'])),
+      appBar: AppBar(title: Text(restaurant['name'] ?? ''), centerTitle: true),
+
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.green,
+
+        child: const Icon(Icons.add),
+
+        onPressed: () async {
+          Navigator.push(
+            context,
+
+            MaterialPageRoute(
+              builder: (context) => AddReviewScreen(restaurantId: restaurantId),
+            ),
+          );
+        },
+      ),
 
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
 
           children: [
-            const SizedBox(height: 20),
+            Container(
+              height: 220,
 
-            Center(
-              child: CircleAvatar(
-                radius: 55,
+              width: double.infinity,
 
-                backgroundColor: Colors.green.shade100,
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: NetworkImage(restaurant['image'] ?? ''),
 
-                child: const Icon(
-                  Icons.restaurant,
-
-                  size: 55,
-
-                  color: Colors.green,
+                  fit: BoxFit.cover,
                 ),
               ),
             ),
 
-            const SizedBox(height: 30),
+            Padding(
+              padding: const EdgeInsets.all(20),
 
-            Text(
-              widget.restaurant['name'],
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
 
-              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-            ),
-
-            const SizedBox(height: 10),
-
-            Text(
-              widget.restaurant['location'],
-
-              style: TextStyle(fontSize: 18, color: Colors.grey.shade700),
-            ),
-
-            const SizedBox(height: 30),
-
-            Container(
-              padding: const EdgeInsets.all(16),
-
-              decoration: BoxDecoration(
-                color: halal ? Colors.green.shade50 : Colors.orange.shade50,
-
-                borderRadius: BorderRadius.circular(16),
-              ),
-
-              child: Row(
                 children: [
-                  Icon(
-                    halal ? Icons.verified : Icons.warning,
+                  Text(
+                    restaurant['name'] ?? '',
 
-                    color: halal ? Colors.green : Colors.orange,
+                    style: const TextStyle(
+                      fontSize: 28,
 
-                    size: 32,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
 
-                  const SizedBox(width: 16),
+                  const SizedBox(height: 10),
 
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-
+                  Row(
                     children: [
-                      Text(
-                        halal ? 'Halal Verified' : 'Needs Verification',
+                      const Icon(Icons.location_on, color: Colors.red),
 
-                        style: TextStyle(
-                          fontSize: 18,
+                      const SizedBox(width: 6),
 
-                          fontWeight: FontWeight.bold,
+                      Text(restaurant['location'] ?? ''),
+                    ],
+                  ),
 
-                          color: halal ? Colors.green : Colors.orange,
-                        ),
+                  const SizedBox(height: 14),
+
+                  Row(
+                    children: [
+                      Icon(
+                        restaurant['halal'] == true
+                            ? Icons.verified
+                            : Icons.warning,
+
+                        color: restaurant['halal'] == true
+                            ? Colors.green
+                            : Colors.orange,
                       ),
 
-                      const SizedBox(height: 4),
+                      const SizedBox(width: 8),
 
                       Text(
-                        halal ? 'Trusted restaurant' : 'Please verify status',
+                        restaurant['halal'] == true
+                            ? 'Halal Verified'
+                            : 'Needs Verification',
+
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+
+                          color: restaurant['halal'] == true
+                              ? Colors.green
+                              : Colors.orange,
+                        ),
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
 
-            const SizedBox(height: 30),
+                  const SizedBox(height: 14),
 
-            Row(
-              children: [
-                const Icon(Icons.star, color: Colors.amber),
+                  Text(
+                    'Hygiene Status: ${restaurant['hygieneStatus'] ?? ''}',
 
-                const SizedBox(width: 8),
-
-                Text(
-                  widget.restaurant['rating'].toString(),
-
-                  style: const TextStyle(
-                    fontSize: 18,
-
-                    fontWeight: FontWeight.bold,
+                    style: const TextStyle(fontSize: 16),
                   ),
-                ),
-              ],
-            ),
 
-            const SizedBox(height: 30),
+                  const SizedBox(height: 30),
 
-            const Text(
-              'About',
+                  const Text(
+                    'Customer Reviews',
 
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  ),
 
-            const SizedBox(height: 12),
+                  const SizedBox(height: 16),
 
-            const Text(
-              'This restaurant is listed on FoodTrust for halal food verification and community trust tracking.',
+                  StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('restaurants')
+                        .doc(restaurantId)
+                        .collection('reviews')
+                        .orderBy('createdAt', descending: true)
+                        .snapshots(),
 
-              style: TextStyle(fontSize: 16, height: 1.5),
-            ),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
 
-            const SizedBox(height: 30),
+                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                        return const Text('No reviews yet');
+                      }
 
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      final reviews = snapshot.data!.docs;
 
-              children: [
-                const Text(
-                  'Reviews',
+                      return Column(
+                        children: reviews.map((review) {
+                          final data = review.data() as Map<String, dynamic>;
 
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                ),
+                          return ReviewCard(
+                            username: data['username'] ?? '',
 
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    final review = await Navigator.push(
-                      context,
+                            comment: data['comment'] ?? '',
 
-                      MaterialPageRoute(
-                        builder: (context) => const AddReviewScreen(),
-                      ),
-                    );
-
-                    if (review != null) {
-                      setState(() {
-                        reviews.insert(
-                          0,
-
-                          Review(
-                            id: DateTime.now().toString(),
-
-                            userName: review['username'],
-
-                            rating: review['rating'],
-
-                            comment: review['comment'],
-
-                            date: DateTime.now().toString(),
-                          ),
-                        );
-                      });
-                    }
-                  },
-
-                  icon: const Icon(Icons.add),
-
-                  label: const Text('Add Review'),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-
-            ...reviews.map(
-              (review) => ReviewCard(
-                username: review.userName,
-
-                rating: review.rating,
-
-                comment: review.comment,
+                            rating: (data['rating'] ?? 0).toDouble(),
+                          );
+                        }).toList(),
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
           ],
