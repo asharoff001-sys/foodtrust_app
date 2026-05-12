@@ -1,6 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-
-import '../../models/restaurant_model.dart';
 
 import 'restaurant_details_screen.dart';
 
@@ -9,135 +8,91 @@ class RestaurantListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<Restaurant> restaurants = [
-      Restaurant(
-        id: '1',
-
-        name: 'Green Bites',
-
-        location: 'Dhaka',
-
-        rating: 4.8,
-
-        hygieneStatus: 'Excellent',
-
-        reviews: [],
-
-        image: '',
-
-        halal: true,
-      ),
-
-      Restaurant(
-        id: '2',
-
-        name: 'Burger Town',
-
-        location: 'Chittagong',
-
-        rating: 4.5,
-
-        hygieneStatus: 'Good',
-
-        reviews: [],
-
-        image: '',
-
-        halal: true,
-      ),
-
-      Restaurant(
-        id: '3',
-
-        name: 'Spicy Grill',
-
-        location: 'Sylhet',
-
-        rating: 4.2,
-
-        hygieneStatus: 'Average',
-
-        reviews: [],
-
-        image: '',
-
-        halal: false,
-      ),
-    ];
-
     return Scaffold(
-      appBar: AppBar(title: const Text('Restaurants')),
+      appBar: AppBar(title: const Text('Restaurants'), centerTitle: true),
 
-      body: ListView.builder(
-        itemCount: restaurants.length,
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('restaurants')
+            .snapshots(),
 
-        itemBuilder: (context, index) {
-          final restaurant = restaurants[index];
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-          return Card(
-            elevation: 4,
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return const Center(child: Text('No restaurants found'));
+          }
 
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          final restaurants = snapshot.data!.docs;
 
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
+          return ListView.builder(
+            itemCount: restaurants.length,
 
-            child: ListTile(
-              contentPadding: const EdgeInsets.all(12),
+            itemBuilder: (context, index) {
+              final restaurant = restaurants[index];
 
-              leading: CircleAvatar(
-                backgroundColor: Colors.green.shade100,
+              final data = restaurant.data() as Map<String, dynamic>;
 
-                child: const Icon(Icons.restaurant, color: Colors.green),
-              ),
+              final halal = data['halal'] == true;
 
-              title: Text(
-                restaurant.name,
+              return Card(
+                elevation: 4,
 
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
+                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
 
-              subtitle: Text(restaurant.location),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
 
-              trailing: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                child: ListTile(
+                  contentPadding: const EdgeInsets.all(12),
 
-                children: [
-                  Icon(
-                    restaurant.halal ? Icons.verified : Icons.warning,
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.green.shade100,
 
-                    color: restaurant.halal ? Colors.green : Colors.orange,
+                    child: const Icon(Icons.restaurant, color: Colors.green),
                   ),
 
-                  const SizedBox(height: 4),
+                  title: Text(
+                    data['name'] ?? '',
 
-                  Text(restaurant.rating.toString()),
-                ],
-              ),
-
-              onTap: () {
-                Navigator.push(
-                  context,
-
-                  MaterialPageRoute(
-                    builder: (context) => RestaurantDetailsScreen(
-                      restaurant: {
-                        'id': restaurant.id,
-
-                        'name': restaurant.name,
-
-                        'location': restaurant.location,
-
-                        'rating': restaurant.rating,
-
-                        'halal': restaurant.halal,
-                      },
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
-                );
-              },
-            ),
+
+                  subtitle: Text(data['location'] ?? ''),
+
+                  trailing: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+
+                    children: [
+                      Icon(
+                        halal ? Icons.verified : Icons.warning,
+
+                        color: halal ? Colors.green : Colors.orange,
+                      ),
+
+                      const SizedBox(height: 4),
+
+                      Text(data['rating'].toString()),
+                    ],
+                  ),
+
+                  onTap: () {
+                    Navigator.push(
+                      context,
+
+                      MaterialPageRoute(
+                        builder: (context) => RestaurantDetailsScreen(
+                          restaurant: {'id': restaurant.id, ...data},
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
           );
         },
       ),
