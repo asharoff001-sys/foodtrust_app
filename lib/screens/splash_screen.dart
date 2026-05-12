@@ -1,6 +1,10 @@
 import 'dart:async';
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
+
+import '../widgets/bottom_nav.dart';
+import 'login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -15,10 +19,23 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
 
     Timer(const Duration(seconds: 3), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (!mounted) return;
+
+      if (user != null) {
+        Navigator.pushReplacement(
+          context,
+
+          MaterialPageRoute(builder: (context) => const BottomNav()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        );
+      }
     });
   }
 
@@ -31,26 +48,44 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
 
-          children: const [
-            Icon(Icons.restaurant, color: Colors.white, size: 120),
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
 
-            SizedBox(height: 20),
+              decoration: const BoxDecoration(
+                color: Colors.white,
 
-            Text(
+                shape: BoxShape.circle,
+              ),
+
+              child: const Icon(Icons.verified, size: 80, color: Colors.green),
+            ),
+
+            const SizedBox(height: 30),
+
+            const Text(
               'FoodTrust',
+
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 36,
+
+                fontSize: 40,
+
                 fontWeight: FontWeight.bold,
               ),
             ),
 
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
 
-            Text(
-              'Food Quality & Safety Monitoring',
+            const Text(
+              'Trusted Halal Verification',
+
               style: TextStyle(color: Colors.white70, fontSize: 16),
             ),
+
+            const SizedBox(height: 40),
+
+            const CircularProgressIndicator(color: Colors.white),
           ],
         ),
       ),

@@ -1,112 +1,178 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import '../services/product_service.dart';
-import 'scanner_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+import 'product_details_screen.dart';
+
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  String searchText = '';
+
+  @override
   Widget build(BuildContext context) {
-    final products = ProductService.products;
-
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('FoodTrust Dashboard'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('FoodTrust'), centerTitle: true),
 
-      body: Padding(
-        padding: const EdgeInsets.all(16),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12),
 
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+            child: TextField(
+              onChanged: (value) {
+                setState(() {
+                  searchText = value.toLowerCase();
+                });
+              },
 
-          children: [
-            const Text(
-              'Tracked Products',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-            ),
+              decoration: InputDecoration(
+                hintText: 'Search products...',
 
-            const SizedBox(height: 20),
+                prefixIcon: const Icon(Icons.search),
 
-            Expanded(
-              child: ListView.builder(
-                itemCount: products.length,
+                filled: true,
 
-                itemBuilder: (context, index) {
-                  final product = products[index];
+                fillColor: Colors.grey.shade100,
 
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 15),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
 
-                    child: ListTile(
-                      leading: Icon(
-                        product.isSafe ? Icons.verified : Icons.warning,
-
-                        color: product.isSafe ? Colors.green : Colors.red,
-                      ),
-
-                      title: Text(product.name),
-
-                      subtitle: Text('Expiry: ${product.expiryDate}'),
-
-                      trailing: Text(
-                        product.isSafe ? 'SAFE' : 'UNSAFE',
-
-                        style: TextStyle(
-                          color: product.isSafe ? Colors.green : Colors.red,
-
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.green,
-
-        child: const Icon(Icons.qr_code_scanner),
-
-        onPressed: () async {
-          final scannedBarcode = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const ScannerScreen()),
-          );
-
-          if (scannedBarcode != null) {
-            final scannedProduct = ProductService.products.firstWhere(
-              (product) => product.barcode == scannedBarcode,
-            );
-
-            showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: Text(scannedProduct.name),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('Barcode: ${scannedProduct.barcode}'),
-                    Text('Expiry: ${scannedProduct.expiryDate}'),
-                    Text(
-                      scannedProduct.isSafe ? 'SAFE' : 'UNSAFE',
-                      style: TextStyle(
-                        color: scannedProduct.isSafe
-                            ? Colors.green
-                            : Colors.red,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
+                  borderSide: BorderSide.none,
                 ),
               ),
-            );
-          }
-        },
+            ),
+          ),
+
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('products')
+                  .snapshots(),
+
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Center(child: Text('No products found'));
+                }
+
+                final allProducts = snapshot.data!.docs;
+
+                final filteredProducts = allProducts.where((product) {
+                  final data = product.data() as Map<String, dynamic>;
+
+                  final name = (data['name'] ?? '').toString().toLowerCase();
+
+                  return name.contains(searchText);
+                }).toList();
+
+                if (filteredProducts.isEmpty) {
+                  return const Center(child: Text('No matching products'));
+                }
+
+                return ListView.builder(
+                  itemCount: filteredProducts.length,
+
+                  itemBuilder: (context, index) {
+                    final product = filteredProducts[index];
+
+                    final data = product.data() as Map<String, dynamic>;
+
+                    final halal = data['halal'] == true;
+
+                    return Card(
+                      elevation: 4,
+
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.all(12),
+
+                        onTap: () {
+                          Navigator.push(
+                            context,
+
+                            MaterialPageRoute(
+                              builder: (context) => ProductDetailsScreen(
+                                product: {'id': product.id, ...data},
+                              ),
+                            ),
+                          );
+                        },
+
+                        leading: CircleAvatar(
+                          radius: 28,
+
+                          backgroundColor: Colors.green.shade100,
+
+                          child: const Icon(
+                            Icons.fastfood,
+
+                            color: Colors.green,
+                          ),
+                        ),
+
+                        title: Text(
+                          data['name'] ?? '',
+
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+
+                            fontSize: 17,
+                          ),
+                        ),
+
+                        subtitle: Padding(
+                          padding: const EdgeInsets.only(top: 4),
+
+                          child: Text(data['brand'] ?? ''),
+                        ),
+
+                        trailing: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+
+                          children: [
+                            Icon(
+                              halal ? Icons.verified : Icons.warning,
+
+                              color: halal ? Colors.green : Colors.orange,
+                            ),
+
+                            const SizedBox(height: 4),
+
+                            Text(
+                              halal ? 'Halal' : 'Check',
+
+                              style: TextStyle(
+                                color: halal ? Colors.green : Colors.orange,
+
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

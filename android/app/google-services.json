@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "825773902329",
+    "project_id": "foodtrust-70692",
+    "storage_bucket": "foodtrust-70692.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:825773902329:android:06100af30f4f965c4d1528",
+        "android_client_info": {
+          "package_name": "com.example.foodtrust_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC6EFPg2GbRYGxaJkwYl93KuLb2AttaTrs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
