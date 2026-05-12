@@ -1,8 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import 'product_details_screen.dart';
+import 'submit_product_screen.dart';
 
 class ScannerScreen extends StatefulWidget {
   const ScannerScreen({super.key});
@@ -40,12 +42,54 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
       print('FETCHING PRODUCT WITH ID: $code');
 
+      // PRODUCT NOT FOUND
       if (!doc.exists) {
         if (!context.mounted) return;
 
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Product not found: $code')));
+        final shouldSubmit = await showDialog<bool>(
+          context: context,
+
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('Product Not Found'),
+
+              content: Text(
+                'Barcode $code does not exist.\n\nWould you like to submit this product?',
+              ),
+
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context, false);
+                  },
+
+                  child: const Text('Cancel'),
+                ),
+
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context, true);
+                  },
+
+                  child: const Text('Submit Product'),
+                ),
+              ],
+            );
+          },
+        );
+
+        if (shouldSubmit == true) {
+          if (!context.mounted) return;
+
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SubmitProductScreen(barcode: code),
+            ),
+          );
+        }
+
+        controller.start();
 
         setState(() {
           isScanning = true;
@@ -57,6 +101,28 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
       final data = doc.data() as Map<String, dynamic>;
 
+      // SAVE SCAN HISTORY
+      final user = FirebaseAuth.instance.currentUser;
+
+      print('CURRENT USER: ${user?.uid}');
+
+      if (user != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('scan_history')
+            .add({
+              'productId': doc.id,
+              'productName': data['name'] ?? '',
+              'image': data['image'] ?? '',
+              'scannedAt': Timestamp.now(),
+            });
+
+        print('SCAN HISTORY SAVED');
+      } else {
+        print('USER IS NULL');
+      }
+
       if (!context.mounted) return;
 
       await Navigator.push(
@@ -66,6 +132,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
               ProductDetailsScreen(product: {'id': doc.id, ...data}),
         ),
       );
+
+      controller.start();
 
       setState(() {
         isScanning = true;
@@ -92,6 +160,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Scan Product'),
+
         centerTitle: true,
 
         actions: [
@@ -99,6 +168,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
             onPressed: () {
               controller.toggleTorch();
             },
+
             icon: const Icon(Icons.flash_on),
           ),
         ],
@@ -123,7 +193,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
               code = code.trim();
 
-              // Remove invalid Firestore characters
+              // REMOVE INVALID FIRESTORE CHARACTERS
               code = code.replaceAll('/', '');
               code = code.replaceAll('\\', '');
 
