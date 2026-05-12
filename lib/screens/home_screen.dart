@@ -24,27 +24,21 @@ class _HomeScreenState extends State<HomeScreen> {
             padding: const EdgeInsets.all(12),
 
             child: TextField(
-              onChanged: (value) {
-                setState(() {
-                  searchText = value.toLowerCase();
-                });
-              },
-
               decoration: InputDecoration(
                 hintText: 'Search products...',
 
                 prefixIcon: const Icon(Icons.search),
 
-                filled: true,
-
-                fillColor: Colors.grey.shade100,
-
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-
-                  borderSide: BorderSide.none,
                 ),
               ),
+
+              onChanged: (value) {
+                setState(() {
+                  searchText = value.toLowerCase();
+                });
+              },
             ),
           ),
 
@@ -63,84 +57,72 @@ class _HomeScreenState extends State<HomeScreen> {
                   return const Center(child: Text('No products found'));
                 }
 
-                final allProducts = snapshot.data!.docs;
-
-                final filteredProducts = allProducts.where((product) {
-                  final data = product.data() as Map<String, dynamic>;
-
-                  final name = (data['name'] ?? '').toString().toLowerCase();
-
-                  return name.contains(searchText);
-                }).toList();
-
-                if (filteredProducts.isEmpty) {
-                  return const Center(child: Text('No matching products'));
-                }
+                final products = snapshot.data!.docs;
 
                 return ListView.builder(
-                  itemCount: filteredProducts.length,
+                  itemCount: products.length,
 
                   itemBuilder: (context, index) {
-                    final product = filteredProducts[index];
+                    final product = products[index];
 
                     final data = product.data() as Map<String, dynamic>;
+
+                    final name = (data['name'] ?? '').toString().toLowerCase();
+
+                    if (!name.contains(searchText)) {
+                      return const SizedBox();
+                    }
 
                     final halal = data['halal'] == true;
 
                     return Card(
                       elevation: 4,
 
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-
                       margin: const EdgeInsets.symmetric(
                         horizontal: 12,
                         vertical: 8,
                       ),
 
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+
                       child: ListTile(
                         contentPadding: const EdgeInsets.all(12),
 
-                        onTap: () {
-                          Navigator.push(
-                            context,
+                        leading: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
 
-                            MaterialPageRoute(
-                              builder: (context) => ProductDetailsScreen(
-                                product: {'id': product.id, ...data},
-                              ),
-                            ),
-                          );
-                        },
+                          child: Image.network(
+                            data['image'] ?? '',
 
-                        leading: CircleAvatar(
-                          radius: 28,
+                            width: 60,
 
-                          backgroundColor: Colors.green.shade100,
+                            height: 60,
 
-                          child: const Icon(
-                            Icons.fastfood,
+                            fit: BoxFit.cover,
 
-                            color: Colors.green,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                width: 60,
+
+                                height: 60,
+
+                                color: Colors.grey.shade300,
+
+                                child: const Icon(Icons.fastfood),
+                              );
+                            },
                           ),
                         ),
 
                         title: Text(
                           data['name'] ?? '',
 
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-
-                            fontSize: 17,
-                          ),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
 
-                        subtitle: Padding(
-                          padding: const EdgeInsets.only(top: 4),
-
-                          child: Text(data['brand'] ?? ''),
-                        ),
+                        subtitle: Text(data['brand'] ?? ''),
 
                         trailing: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -165,6 +147,18 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ],
                         ),
+
+                        onTap: () {
+                          Navigator.push(
+                            context,
+
+                            MaterialPageRoute(
+                              builder: (context) => ProductDetailsScreen(
+                                product: {'id': product.id, ...data},
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     );
                   },

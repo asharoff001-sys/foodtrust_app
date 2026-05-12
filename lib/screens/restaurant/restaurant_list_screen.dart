@@ -13,6 +13,8 @@ class RestaurantListScreen extends StatefulWidget {
 class _RestaurantListScreenState extends State<RestaurantListScreen> {
   String searchText = '';
 
+  bool halalOnly = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -39,6 +41,34 @@ class _RestaurantListScreenState extends State<RestaurantListScreen> {
                   searchText = value.toLowerCase();
                 });
               },
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+              children: [
+                const Text(
+                  'Halal Verified Only',
+
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+
+                Switch(
+                  value: halalOnly,
+
+                  activeColor: Colors.green,
+
+                  onChanged: (value) {
+                    setState(() {
+                      halalOnly = value;
+                    });
+                  },
+                ),
+              ],
             ),
           ),
 
@@ -74,6 +104,10 @@ class _RestaurantListScreenState extends State<RestaurantListScreen> {
                     }
 
                     final halal = data['halal'] == true;
+
+                    if (halalOnly && !halal) {
+                      return const SizedBox();
+                    }
 
                     return Card(
                       elevation: 4,

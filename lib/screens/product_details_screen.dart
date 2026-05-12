@@ -43,13 +43,27 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     ).showSnackBar(const SnackBar(content: Text('Product Saved')));
   }
 
+  Color getSafetyColor(double score) {
+    if (score >= 8) {
+      return Colors.green;
+    }
+
+    if (score >= 5) {
+      return Colors.orange;
+    }
+
+    return Colors.red;
+  }
+
   @override
   Widget build(BuildContext context) {
     final halal = widget.product['halal'] == true;
 
+    final safetyScore = (widget.product['safetyScore'] ?? 0).toDouble();
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.product['name']?.toString() ?? 'Product'),
+        title: Text(widget.product['name'] ?? 'Product'),
 
         actions: [
           IconButton(
@@ -68,46 +82,56 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
           children: [
             Center(
-              child: CircleAvatar(
-                radius: 55,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
 
-                backgroundColor: Colors.green.shade100,
+                child: Image.network(
+                  widget.product['image'] ?? '',
 
-                child: const Icon(
-                  Icons.fastfood,
+                  height: 220,
 
-                  size: 55,
+                  width: double.infinity,
 
-                  color: Colors.green,
+                  fit: BoxFit.cover,
+
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 220,
+
+                      color: Colors.grey.shade300,
+
+                      child: const Icon(Icons.fastfood, size: 80),
+                    );
+                  },
                 ),
               ),
             ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 25),
 
             Text(
-              widget.product['name']?.toString() ?? '',
+              widget.product['name'] ?? '',
 
               style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
             ),
 
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
 
             Text(
-              widget.product['brand']?.toString() ?? '',
+              widget.product['brand'] ?? '',
 
               style: TextStyle(fontSize: 18, color: Colors.grey.shade700),
             ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 25),
 
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(18),
 
               decoration: BoxDecoration(
-                color: halal ? Colors.green.shade50 : Colors.orange.shade50,
+                color: getSafetyColor(safetyScore).withOpacity(0.1),
 
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(18),
               ),
 
               child: Row(
@@ -117,38 +141,60 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
                     color: halal ? Colors.green : Colors.orange,
 
-                    size: 32,
+                    size: 36,
                   ),
 
                   const SizedBox(width: 16),
 
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
 
-                    children: [
-                      Text(
-                        halal ? 'Halal Verified' : 'Needs Checking',
+                      children: [
+                        Text(
+                          halal ? 'Halal Verified' : 'Needs Verification',
 
-                        style: TextStyle(
-                          fontSize: 18,
+                          style: TextStyle(
+                            fontSize: 20,
 
-                          fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.bold,
 
-                          color: halal ? Colors.green : Colors.orange,
+                            color: halal ? Colors.green : Colors.orange,
+                          ),
                         ),
-                      ),
 
-                      const SizedBox(height: 4),
+                        const SizedBox(height: 6),
 
-                      Text(
-                        halal
-                            ? 'Safe for consumption'
-                            : 'Please verify ingredients',
-                      ),
-                    ],
+                        Text(
+                          'Safety Score: ${safetyScore.toStringAsFixed(1)}/10',
+
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+
+                            color: getSafetyColor(safetyScore),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
+            ),
+
+            const SizedBox(height: 30),
+
+            const Text(
+              'Ingredients',
+
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+
+            const SizedBox(height: 10),
+
+            Text(
+              widget.product['ingredients'] ?? '',
+
+              style: const TextStyle(fontSize: 16, height: 1.5),
             ),
 
             const SizedBox(height: 30),
@@ -159,24 +205,15 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
 
             Text(
-              widget.product['description']?.toString() ??
-                  'No description available.',
+              widget.product['description'] ?? '',
 
               style: const TextStyle(fontSize: 16, height: 1.5),
             ),
 
             const SizedBox(height: 30),
-
-            const Text(
-              'Product Information',
-
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-
-            const SizedBox(height: 12),
 
             Card(
               shape: RoundedRectangleBorder(
@@ -192,25 +229,29 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
 
                       children: [
-                        const Text('Brand'),
+                        const Text('Category'),
 
-                        Text(widget.product['brand']?.toString() ?? ''),
+                        Text(widget.product['category'] ?? ''),
                       ],
                     ),
 
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 14),
 
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
 
                       children: [
-                        const Text('Status'),
+                        const Text('Safety'),
 
                         Text(
-                          halal ? 'Halal' : 'Check',
+                          safetyScore >= 8
+                              ? 'Safe'
+                              : safetyScore >= 5
+                              ? 'Moderate'
+                              : 'Risky',
 
                           style: TextStyle(
-                            color: halal ? Colors.green : Colors.orange,
+                            color: getSafetyColor(safetyScore),
 
                             fontWeight: FontWeight.bold,
                           ),
